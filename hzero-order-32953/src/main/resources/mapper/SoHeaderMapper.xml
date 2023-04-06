@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.hzero.order32953.infra.mapper.SoHeaderMapper">
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="org.hzero.order32953.domain.entity.SoHeader">
+        <result column="so_header_id" property="soHeaderId" jdbcType="DECIMAL"/>
+        <result column="order_number" property="orderNumber" jdbcType="VARCHAR"/>
+        <result column="company_id" property="companyId" jdbcType="DECIMAL"/>
+        <result column="order_date" property="orderDate" jdbcType="DATE"/>
+        <result column="order_status" property="orderStatus" jdbcType="VARCHAR"/>
+        <result column="customer_id" property="customerId" jdbcType="DECIMAL"/>
+        <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <result column="total_price" property="totalPrice" jdbcType="DECIMAL"/>
+        <association property="company" javaType="org.hzero.order32953.domain.entity.Company">
+            <result column="company_id" property="companyId" jdbcType="DECIMAL"/>
+            <result column="company_number" property="companyNumber" jdbcType="VARCHAR"/>
+            <result column="company_name" property="companyName" jdbcType="VARCHAR"/>
+        </association>
+        <association property="customer" javaType="org.hzero.order32953.domain.entity.Customer">
+            <result column="customer_id" property="customerId" jdbcType="DECIMAL"/>
+            <result column="customer_number" property="customerNumber" jdbcType="VARCHAR"/>
+            <result column="customer_name" property="customerName" jdbcType="VARCHAR"/>
+        </association>
+        <collection property="soLines" ofType="org.hzero.order32953.domain.entity.SoLine">
+            <result column="so_line_id" property="soLineId" jdbcType="DECIMAL"/>
+            <result column="so_header_id" property="soHeaderId" jdbcType="DECIMAL"/>
+            <result column="line_number" property="lineNumber" jdbcType="DECIMAL"/>
+            <result column="item_id" property="itemId" jdbcType="DECIMAL"/>
+            <result column="order_quantity" property="orderQuantity" jdbcType="DECIMAL"/>
+            <result column="order_quantity_uom" property="orderQuantityUom" jdbcType="VARCHAR"/>
+            <result column="unit_selling_price" property="unitSellingPrice" jdbcType="DECIMAL"/>
+            <result column="description" property="description" jdbcType="VARCHAR"/>
+            <result column="addition1" property="addition1" jdbcType="VARCHAR"/>
+            <result column="addition2" property="addition2" jdbcType="VARCHAR"/>
+            <result column="addition3" property="addition3" jdbcType="VARCHAR"/>
+            <result column="addition4" property="addition4" jdbcType="VARCHAR"/>
+            <result column="addition5" property="addition5" jdbcType="VARCHAR"/>
+            <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+            <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+            <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+            <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+            <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <update id="updateStatus">
+        update hodr_so_header set order_status = #{status}
+        <where>
+            <if test="condition != null">
+                and order_status = #{condition}
+            </if>
+            <if test="soHeaderId != null">
+                and so_header_id = #{soHeaderId}
+            </if>
+        </where>
+    </update>
+
+    <select id="selectHeader" resultMap="BaseResultMap" parameterType="long">
+        select  sh.so_header_id,
+                sh.order_number,
+                sh.company_id,
+                cmp.company_name,
+                cmp.company_number,
+                sh.customer_id,
+                ctm.customer_name,
+                ctm.customer_number,
+                sh.order_date,
+                sh.order_status,
+                sh.created_by,
+                sh.object_version_number
+        from hodr_so_header sh
+        left join hodr_company cmp
+        on sh.company_id = cmp.company_id
+        left join hodr_customer ctm
+        on sh.customer_id = ctm.customer_id
+        <where>
+            <if test="soHeaderId != null">
+                sh.so_header_id = #{soHeaderId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectEverything" resultMap="BaseResultMap">
+        select sh.so_header_id, sh.order_number, cmp.company_id, cmp.company_name, cst.customer_id, cst.customer_name,
+        sh.order_date, sh.order_status, Round(sum(sl.unit_selling_price * sl.order_quantity), 2) 'total_price',
+        sh.object_version_number, sh.created_by
+        from hodr_company cmp, hodr_customer cst, hodr_so_header sh, hodr_so_line sl
+        WHERE cmp.company_id = sh.company_id and cst.customer_id = sh.customer_id and sh.so_header_id = sl.so_header_id
+        <if test="orderNumber != null">
+            and sh.order_number like concat(#{orderNumber} , '%')
+        </if>
+        <if test="companyId != null">
+            and cmp.company_id = #{companyId}
+        </if>
+        <if test="customerId != null">
+            and cst.customer_id = #{customerId}
+        </if>
+        <if test="orderStatus != null">
+            and sh.order_status = #{orderStatus}
+        </if>
+        GROUP BY sh.so_header_id
+    </select>
+
+</mapper>

@@ -1,0 +1,101 @@
+spring:
+  application:
+    name: hzero-order-32953
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://db.hzero.org:3306/hzero_order_32953?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true}
+    username: ${SPRING_DATASOURCE_USERNAME:hzero}
+    password: ${SPRING_DATASOURCE_PASSWORD:hzero}
+    hikari:
+      minimum-idle: ${SPRING_DATASOURCE_MINIMUM_IDLE:20}
+      maximum-pool-size: ${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:200}
+      connection-timeout: ${SPRING_DATASOURCE_CONNECTION_TIMEOUT:30000}
+  redis:
+    host: ${SPRING_REDIS_HOST:redis.hzero.org}
+    port: ${SPRING_REDIS_PORT:6379}
+    database: ${SPRING_REDIS_DATABASE:1}
+    password: ${SPRING_REDIS_PASSWORD:}
+    jedis:
+      pool:
+        max-active: ${SPRING_REDIS_POOL_MAX_ACTIVE:50}
+        max-idle: ${SPRING_REDIS_POOL_MAX_IDLE:50}
+        max-wait: ${SPRING_REDIS_POOL_MAX_WAIT:5000}
+  resources:
+    cache.period: 3600
+    chain.gzipped: true
+    chain.cache: true
+  servlet:
+    multipart:
+      max-request-size: 30MB
+      max-file-size: 30MB
+server:
+  undertow:
+    io-threads: ${SERVER_UNDERTOW_IO_THREADS:4}
+    worker-threads: ${SERVER_UNDERTOW_WORKER_THREADS:128}
+    buffer-size: ${SERVER_UNDERTOW_BUFFER_SIZE:1024}
+    direct-buffers: true
+    max-http-post-size: 10485760
+    allow-unescaped-characters-in-url: true
+feign:
+  hystrix:
+    enabled: true
+hystrix:
+  threadpool:
+    default:
+      coreSize: 1000
+      maximumSize: 1000
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: ${HYSTRIX_COMMAND_TIMEOUT_IN_MILLISECONDS:40000}
+ribbon:
+  ReadTimeout: ${RIBBON_READ_TIMEOUT:30000}
+  ConnectTimeout: ${RIBBON_CONNECT_TIMEOUT:3000}
+  OkToRetryOnAllOperations: true
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+mybatis:
+  mapperLocations: classpath*:/mapper/*.xml
+  configuration:
+    mapUnderscoreToCamelCase: true
+logging:
+  level:
+    org.apache.ibatis: debug
+    io.choerodon: debug
+    org.hzero: debug
+
+hzero:
+  lock:
+    pattern: single
+    single-server:
+      address: redis.hzero.org
+      port: 6379
+  import:
+    transaction-control: true
+    batch-size: 3000
+  file:
+    gateway-path: ${FILE_GATEWAY_URL:http://dev.hzero.org:8080/himp}
+  export:
+    # 默认请求模式，允许的值 SYNC ASYNC，默认null
+    # 默认请求模式设置为同步，则所有调用均为同步调用；默认请求模式设置为异步，则所有调用均为异步调用
+    # 当defaultRequestMode="ASYNC" && enableAsync=false时，服务会启动报错
+    default-request-mode:
+    # 是否开启异步，默认为false
+    enable-async: true
+    # 异步阈值，若导出的数据总量超过该阈值，强制执行异步导出
+    async-threshold:
+    # 默认最大sheet数，默认值5
+    single-excel-max-sheet-num: 5
+    # 默认sheet页最大行数，默认值1000000
+    single-sheet-max-row: 1000000
+    # 异步线程池核心线程数
+    core-pool-size: 3
+    # 异步线程池最大线程数
+    maximum-pool-size: 10
+    # 异步线程池线存活时间
+    keep-alive-time: 0
+    # 异步线程池线等待队列大小
+    queue-size:
+    # # 异步线程池线程名称
+    async-thread-name: async-export-executor

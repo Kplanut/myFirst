@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.hzero.order32953.infra.mapper.SoLineMapper">
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="org.hzero.order32953.domain.entity.SoLine">
+        <result column="so_line_id" property="soLineId" jdbcType="DECIMAL"/>
+        <result column="so_header_id" property="soHeaderId" jdbcType="DECIMAL"/>
+        <result column="line_number" property="lineNumber" jdbcType="DECIMAL"/>
+        <result column="item_id" property="itemId" jdbcType="DECIMAL"/>
+        <result column="order_quantity" property="orderQuantity" jdbcType="DECIMAL"/>
+        <result column="order_quantity_uom" property="orderQuantityUom" jdbcType="VARCHAR"/>
+        <result column="unit_selling_price" property="unitSellingPrice" jdbcType="DECIMAL"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="addition1" property="addition1" jdbcType="VARCHAR"/>
+        <result column="addition2" property="addition2" jdbcType="VARCHAR"/>
+        <result column="addition3" property="addition3" jdbcType="VARCHAR"/>
+        <result column="addition4" property="addition4" jdbcType="VARCHAR"/>
+        <result column="addition5" property="addition5" jdbcType="VARCHAR"/>
+        <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <association property="item" javaType="org.hzero.order32953.domain.entity.Item">
+            <result column="item_id" property="itemId" jdbcType="DECIMAL"/>
+            <result column="item_code" property="itemCode" jdbcType="VARCHAR"/>
+            <result column="item_uom" property="itemUom" jdbcType="VARCHAR"/>
+            <result column="item_description" property="itemDescription" jdbcType="VARCHAR"/>
+            <result column="saleable_flag" property="saleableFlag" jdbcType="DECIMAL"/>
+            <result column="start_active_date" property="startActiveDate" jdbcType="DATE"/>
+            <result column="end_active_date" property="endActiveDate" jdbcType="DATE"/>
+            <result column="enabled_flag" property="enabledFlag" jdbcType="DECIMAL"/>
+            <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+            <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+            <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+            <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+            <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        </association>
+    </resultMap>
+    <insert id="batchInsertSelectiveLine">
+        insert into hodr_so_line(so_header_id, line_number, item_id, order_quantity, order_quantity_uom, unit_selling_price)
+        values
+        <foreach collection="soLines" item="soLine" separator=",">
+            (#{soLine.soHeaderId}, #{soLine.lineNumber}, #{soLine.itemId}, #{soLine.orderQuantiry}, #{soLine.item.itemUom}, ##{soLine.unitSellingPrice})
+        </foreach>
+    </insert>
+
+    <select id="selectLineWithItem" parameterType="org.hzero.order32953.domain.entity.SoLine" resultMap="BaseResultMap">
+        select sl.so_line_id,
+               sl.so_header_id,
+               sl.item_id,
+               it.item_code,
+               it.item_description,
+               sl.line_number,
+               sl.order_quantity,
+               it.item_uom,
+               sl.unit_selling_price,
+               sl.object_version_number
+        from hodr_so_line sl
+        left join hodr_item it
+        on sl.item_id = it.item_id
+        <where>
+            <if test="soHeaderId != null">
+                sl.so_header_id = #{soHeaderId}
+            </if>
+        </where>
+    </select>
+    <select id="selectMaxLineNumber" resultType="java.lang.Long">
+        select max(line_number)
+        from hodr_so_line
+        <where>
+            <if test="soHeaderId != null">
+                so_header_id = #{soHeaderId}
+            </if>
+        </where>
+    </select>
+
+    <delete id="batchDeleteBySoHeaderId" parameterType="long">
+        delete from hodr_so_line where so_header_id = #{soHeaderId}
+    </delete>
+</mapper>
